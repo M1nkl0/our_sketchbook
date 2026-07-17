@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Our Little Sketchbook:3</title>
+<title>Our Lil Sketchbook</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400..700&family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
@@ -15,7 +15,7 @@
 
   <header class="topbar">
     <h1 class="logo">Our Lil Sketchbook</h1>
-    <p class="tagline">Let's draaaaaw babyyy</p>
+    <p class="tagline">Baby, let's draw all our dreams kikiki</p>
   </header>
 
   <main class="board">
@@ -23,7 +23,7 @@
     <!-- Photo frame: left -->
     <div class="polaroid polaroid-left">
       <div class="photo-placeholder" id="photoLeft">
-        <img src="silly_babies.jpg" alt="">
+        <img src="baby_coffee.jpg" alt="">
       </div>
       <p class="caption">:3</p>
     </div>
@@ -36,13 +36,17 @@
       <div class="toolbar">
         <div class="colors" id="colorSwatches"></div>
         <input type="color" id="colorPicker" value="#E84A9C" title="Custom color">
-        <label class="brush-size-label">
-          brush
+        <label class="slider-label">
+          lil brush
           <input type="range" id="brushSize" min="2" max="40" value="6">
         </label>
+        <label class="slider-label">
+          lil transparency
+          <input type="range" id="opacitySlider" min="10" max="100" value="100">
+        </label>
         <button id="eraserBtn" class="tool-btn" title="Eraser">lil eraser</button>
-        <button id="clearBtn" class="tool-btn danger" title="Clear the whole board">clean up</button>
-        <span class="status" id="statusDot">looking for baby brush...</span>
+        <button id="clearBtn" class="tool-btn danger" title="Clear the whole board">start again kiki</button>
+        <span class="status" id="statusDot">lil connecting…</span>
       </div>
 
       <canvas id="board" width="1000" height="700"></canvas>
@@ -51,7 +55,7 @@
     <!-- Photo frame: right -->
     <div class="polaroid polaroid-right">
       <div class="photo-placeholder" id="photoRight">
-        <img src="baby_coffee.jpg" alt="">
+        <img src="silly_babies.jpg" alt="">
       </div>
       <p class="caption">:3</p>
     </div>
@@ -59,8 +63,13 @@
   </main>
 
   <footer class="footer">
-    <p>Happy birthday, my dear love! I wanna spend a 100 more birthdays together with you, baby</p>
+    <p>Happy Birthday, my dear love! I wanna spend a 100 more birthdays together</p>
   </footer>
+
+  <!-- Fullscreen photo lightbox -->
+  <div class="lightbox" id="lightbox">
+    <img id="lightboxImg" src="" alt="">
+  </div>
 
   <!-- Firebase -->
   <script type="module" src="firebase-init.js"></script>
