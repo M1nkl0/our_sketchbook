@@ -230,7 +230,7 @@ onValue(clearRef, (snapshot) => {
         )
       );
     pendingStrokes = [];
-    statusDot.textContent = "● connected — go draw something 💌";
+    statusDot.textContent = "everything working! let's draaawww kikiki";
     statusDot.classList.add("connected");
     return;
   }
