@@ -131,9 +131,9 @@ html, body{
   padding-bottom: 10px;
   border-bottom: 2px dashed #f0d9c8;
 }
-.colors{ display:flex; gap:6px; flex-wrap: wrap; }
+.colors{ display:flex; gap:5px; flex-wrap: wrap; max-width: 220px; }
 .swatch{
-  width: 24px; height: 24px;
+  width: 20px; height: 20px;
   border-radius: 50%;
   border: 2px solid #fff;
   box-shadow: 0 0 0 1.5px rgba(0,0,0,.15);
