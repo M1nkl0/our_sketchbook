@@ -13,17 +13,23 @@ const ctx = canvas.getContext("2d");
 ctx.lineCap = "round";
 ctx.lineJoin = "round";
 
-// Expanded palette: originals + a wider spread of orange/pink/purple family
-// plus black/white for outlines and highlights.
+// Full rainbow, plus the couple's signature orange/pink/purple shades,
+// plus ink/white for outlines and highlights.
 const PALETTE = [
   "#2B1B33", // ink
   "#FFFFFF", // white
+  "#E63946", // red
   "#FF8C42", // orange
-  "#FFC15E", // light amber
-  "#E84A9C", // pink
-  "#F792C4", // light pink
+  "#FFC15E", // amber
+  "#FFE066", // yellow
+  "#8AC926", // green
+  "#1FA2A6", // teal
+  "#3A86FF", // blue
+  "#5E60CE", // indigo
   "#7B3FA0", // purple
   "#B27BDB", // light purple
+  "#E84A9C", // pink
+  "#F792C4", // light pink
   "#C0356B", // deep rose
   "#FF5E7E"  // coral red
 ];
@@ -152,19 +158,40 @@ canvas.addEventListener("touchstart", startDraw, { passive: false });
 canvas.addEventListener("touchmove", moveDraw, { passive: false });
 window.addEventListener("touchend", endDraw);
 
-// ---------- receive strokes from the other person (and our own, echoed) ----------
-let loaded = false;
-onValue(strokesRef, () => {
-  if (!loaded) {
-    loaded = true;
-    statusDot.textContent = "● connected — go draw something 💌";
-    statusDot.classList.add("connected");
-  }
-}, { onlyOnce: true });
+function blankCanvas() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.fillStyle = "#FFFFFF";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+}
 
+// Prime the canvas white FIRST, before any history can arrive, so we never
+// accidentally wipe strokes that already drew in.
+blankCanvas();
+
+// ---------- clear-signal bookkeeping ----------
+// We need to know the clear signal's timestamp BEFORE we finish replaying
+// stroke history, so a clear that happened while a device was offline is
+// respected (old strokes from before that clear don't get redrawn).
+let lastSeenClearTime = 0;
+let clearTimeKnown = false;
+let pendingStrokes = [];
+
+// ---------- receive every stroke ever drawn (full history) + live updates ----------
+// onChildAdded fires once for EVERY existing node the moment a client
+// connects (this is what makes the whole drawing history reappear after
+// being offline or reloading), then keeps firing for each new stroke live.
+// We hold strokes in a queue until we know the clear-signal's timestamp,
+// so we never draw something that's actually older than the last "clear all".
 onChildAdded(strokesRef, (snapshot) => {
   const s = snapshot.val();
   if (!s) return;
+
+  if (!clearTimeKnown) {
+    pendingStrokes.push(s);
+    return;
+  }
+  if (s.t && s.t < lastSeenClearTime) return; // stroke predates the last clear
+
   drawSegment(
     { x: s.x1, y: s.y1 },
     { x: s.x2, y: s.y2 },
@@ -174,35 +201,44 @@ onChildAdded(strokesRef, (snapshot) => {
   );
 });
 
-function blankCanvas() {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  ctx.fillStyle = "#FFFFFF";
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
-}
-
-// ---------- clear all (fixed: broadcasts to both clients) ----------
-// Previously this only wiped the local canvas + deleted Firebase data,
-// so the *other* device never redrew/cleared until it happened to reload.
-// Now we write a clear signal with a timestamp; every client (including
-// the one that clicked) listens for that and clears in response.
-let lastSeenClearTime = 0;
-
+// ---------- clear all (broadcasts to both clients, even ones offline right now) ----------
+// Writing a timestamped signal to the database (instead of just deleting
+// strokes locally) means: any device connected right now clears immediately,
+// and any device that opens the site LATER also sees the clear, because it
+// reads this signal before deciding which historical strokes to replay.
 clearBtn.addEventListener("click", () => {
   if (!confirm("Clear the whole board for both of you? This can't be undone.")) return;
-  remove(strokesRef);
   set(clearRef, { t: Date.now() });
 });
 
 onValue(clearRef, (snapshot) => {
   const val = snapshot.val();
-  if (!val || !val.t) return;
-  if (val.t === lastSeenClearTime) return; // ignore initial/duplicate fire
-  lastSeenClearTime = val.t;
+  const t = (val && val.t) || 0;
+
+  if (!clearTimeKnown) {
+    // First time hearing the clear signal: use it to filter the stroke
+    // history we've been holding, then flush whatever survives the filter.
+    clearTimeKnown = true;
+    lastSeenClearTime = t;
+    blankCanvas();
+    pendingStrokes
+      .filter((s) => !s.t || s.t >= lastSeenClearTime)
+      .forEach((s) =>
+        drawSegment(
+          { x: s.x1, y: s.y1 }, { x: s.x2, y: s.y2 },
+          s.color, s.size, s.opacity ?? 1
+        )
+      );
+    pendingStrokes = [];
+    statusDot.textContent = "● connected — go draw something 💌";
+    statusDot.classList.add("connected");
+    return;
+  }
+
+  if (t === lastSeenClearTime) return; // duplicate fire, ignore
+  lastSeenClearTime = t;
   blankCanvas();
 });
-
-// prime canvas with white background
-blankCanvas();
 
 // ---------- photo placeholders: click to preview locally + fullscreen lightbox ----------
 const lightbox = document.getElementById("lightbox");
